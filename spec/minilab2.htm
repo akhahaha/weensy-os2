@@ -1,0 +1,339 @@
+
+<!-- saved from url=(0063)http://lasr.cs.ucla.edu/vahab/cs111/labs/minilab2/MiniLab2.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<link rel="stylesheet" type="text/css" href="./minilab2_files/style.css">
+<title>WeensyOS Minilab 2 - CS 111, Summer 2013</title>
+<style type="text/css"></style></head>
+<body>
+
+
+<div class="body">
+
+
+
+
+<h2>WeensyOS Minilab 2</h2>
+
+<p class="exercise">Keep in mind that this is individual work only—no groups. (You can share ideas but not code.)
+</p>
+
+<p>This second of the Weensy OS problem sets introduces you to another
+weensy operating system.
+
+WeensyOS 2 shows off <i>scheduling</i> and <i>synchronization</i>.</p>
+
+<!-- <table cellspacing='0' cellpadding='0' border='0'>
+<tr><td><b><a href='weensyos2.tar.gz'><code>weensyos2.tar.gz</code></a></b>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>Source code for WeensyOS 2.0, the Scheduler OS</td></tr>
+</table> -->
+
+
+<h3>Handing in</h3>
+
+<p>You will electronically hand in code and a small writeup
+containing answers to the numbered exercises.
+
+The problem set code, <code>weensyos2.tar.gz</code>, unpacks into a
+directory called <code>weensyos2</code>.  (We explain how to unpack it
+below.)
+
+You'll modify the code in this directory, and add a text file with your
+answers to the numbered exercises.
+
+When you're done, run the command <code class="type">make tarball</code>.
+
+This should create a file named
+<code>weensyos1-<i>yourusername</i>.tar.gz</code>.
+
+You'll turn in this file to CourseWeb.</p>
+
+<p><b>Answer the numbered exercises</b> by editing the file named
+<code>answers.txt</code>.
+
+<i>No Microsoft Word documents</i> (or other binary format, except for PDF
+in special cases) <i>will be accepted!</i>
+
+For coding exercises, it's OK for <code>answers.txt</code> to just refer to
+your code (as long as you comment your code).</p>
+
+
+<p>To review:</p>
+
+<ol>
+<li>Download <code>weensyos2.tar.gz</code> from CourseWeb and unpack it.</li>
+<li>Do your work in the <code>weensyos2</code> directory.</li>
+<li>Fill out the
+<code>answers.txt</code> file in that directory.</li>
+<li>When you're done, run <code class="type">make tarball</code> from the <code>weensyos2</code> directory.  This will create a file named <code>weensyos2-<i>yourusername</i>.tar.gz</code>.</li>
+<li>Submit that <code>weensyos2-<i>yourusername</i>.tar.gz</code> file to CourseWeb.</li>
+</ol>
+
+
+
+<h3>Part 1: Scheduling</h3>
+
+<p class="note">Please note that you can do Parts 1 and 2 in either order.</p>
+
+<p>First, you must set up your machine to compile and run WeensyOSes.  You
+can use the setup that worked for you for <a href="http://lasr.cs.ucla.edu/vahab/cs111/labs/minilab1/MiniLab1.html">WeensyOS
+1</a>.</p>
+
+<!--
+<pre class='samp'>
+In <b>bash</b>/<b>sh</b>:   $ <span class='type'>export PATH=${PATH}:/u/cs/class/cs111/cbin/bin</span>
+In <b>tcsh</b>/<b>csh</b>:  % <span class='type'>setenv PATH ${PATH}:/u/cs/class/cs111/cbin/bin</span></pre>
+-->
+
+<p class="exercise">Download and unpack the source for weensyos2.</p>
+
+<pre class="samp">% <span class="type">gtar xzf weensyos2.tar.gz</span>
+% <span class="type">ls weensyos2</span>
+COPYRIGHT    lib.c         schedos-4.c     schedos-loader.c    x86sync.h
+GNUmakefile  lib.h         schedos-app.h   schedos-symbols.ld
+answers.txt  mkbootdisk.c  schedos-boot.c  schedos-x86.c
+bootstart.S  schedos-1.c   schedos-int.S   schedos.h
+conf         schedos-2.c   schedos-kern.c  types.h
+elf.h        schedos-3.c   schedos-kern.h  x86.h
+%
+</pre>
+
+<p class="exercise"> Change into the <tt>weensyos2</tt> directory and run
+<tt class="type">make run</tt>. </p>
+
+<p>This builds and runs the WeensyOS 2 operating system,
+the "scheduler OS" or SchedOS.  As before, this will start up
+Bochs.  After a moment you should see a window like this:</p>
+
+<img src="./minilab2_files/fig-schedos1.gif" alt="[SchedOS 1]" align="middle" border="1">
+
+<p>The SchedOS consists of a kernel and four simple user processes.
+The <code>schedos-1</code> process prints 320 red
+"<code>1</code>"s, the <code>schedos-2</code> process prints 320 green
+"<code>2</code>"s, and so forth.  Each process yields control to the kernel
+after each character, so that the kernel can choose another process to run.
+Each process exits after printing its 320 characters.  The four processes
+coordinate their printing with a shared variable, <code>cursorpos</code>,
+located at memory address 0x198000.  The kernel initializes
+<code>cursorpos</code> to point at address 0xB8000, the start of CGA
+console memory.  Processes write their characters into
+<code>*cursorpos</code>, and then increment <code>cursorpos</code> to the
+next position.</p>
+
+<p class="exercise">Read and understand the SchedOS process code.
+Specifically, read and understand <code>schedos-1.c</code>.</p>
+
+<p class="exercise">Read and understand the comments in
+<code>schedos-app.h</code>.  The basic feeling should be familiar to you
+from WeensyOS 1.</p>
+
+<p>The kernel's job is very simple.  At boot time, it initializes the hardware,
+initializes a process descriptor for each process, and runs the first
+process.  At that point it loses control of the machine until a system call
+or interrupt occurs.  System calls and interrupts effectively call
+the kernel's <code>interrupt</code> function.  Note that this simple
+kernel <i>has no persistent stack</i>: every time a system call occurs, the
+kernel stack starts over again from the very top, and any previous stack
+information is thrown away.  Thus, all persistent kernel data must be
+stored in global variables.</p>
+
+<div class="exercise">Read and understand the following pieces of kernel
+code.  Again, don't worry about every last detail; just get a feeling for
+the high-level structure and purpose of each function.
+
+<ol>
+<li>The process descriptor structure <code>process_t</code> defined in
+<code>schedos-kern.h</code>.  This is a lot like the process descriptor
+structure from WeensyOS 1.</li>
+
+<li>The comments at the top of <code>schedos-kern.c</code>.</li>
+
+<li>The <code>start</code> function from <code>schedos-kern.c</code>, which
+initializes the kernel.</li>
+
+<li>The <code>interrupt</code> function from <code>schedos-kern.c</code>, which
+handles all interrupts and system call traps.</li>
+</ol>
+</div>
+
+
+<p>SchedOS supports two system calls, <code>sys_yield</code> and
+<code>sys_exit</code>.  The <code>sys_yield</code> call yields control to
+another process, and <code>sys_exit</code> exits the current process,
+marking it as nonrunnable.  The kernel implementations of these system
+calls (in <code>interrupt()</code>) both call the <code>schedule</code>
+function.  This function is SchedOS's scheduler: it chooses a process from
+the current set of runnable processes, then runs it.  In the first part of
+this problem set, you'll focus on this function, and SchedOS's scheduling
+algorithms.</p>
+
+<p class="exercise">Read and understand the <code>schedule</code> function
+from <code>schedos-kern.c</code>.</p>
+
+<p class="exercise"><b>Exercise 1.</b> What is the name of the scheduling
+algorithm <code>schedule()</code> currently implements? (What is
+<code>scheduling_algorithm 0</code>?)</p>
+
+<p class="exercise"><b>Exercise 2.</b> Add code to <code>schedule()</code>
+so that <code>scheduling_algorithm 1</code> implements strict priority
+scheduling.  Your implementation should give <code>schedos-1</code> higher
+priority than <code>schedos-2</code>, which has higher priority than
+<code>schedos-3</code>, which has higher priority than
+<code>schedos-4</code>.  Thus, process IDs correspond to priority levels
+(assuming that numeric priority levels are defined as usual, where smaller
+<i>priority levels</i> indicate higher <i>priority</i>).  You will also
+need to change <code>schedos-1.c</code> so that the <code>schedos</code>
+processes actually exit via <code>sys_exit()</code>, instead of just
+yielding forever.  Test your code.</p>
+
+<div class="note">Please note although SchedOS's current processes never
+block, your scheduler must work correctly even if processes blocked and
+later became runnable again.</div>
+
+<p class="exercise"><b>Exercise 3.</b> Calculate the <i>average turnaround
+time</i> and <i>average wait time</i> across all four jobs for
+<code>scheduling_algorithm</code>s 0 and 1.  Assume that printing 1
+character takes 1 millisecond and that everything else, including a context
+switch, is free.</p>
+
+<p>Now complete <i>at least one</i> of Exercises 4A and 4B.</p>
+
+<p class="exercise"><b>Exercise 4A.</b> Add another scheduling algorithm,
+<code>scheduling_algorithm 2</code>, that acts like
+<code>scheduling_algorithm 1</code> except that priority levels are defined
+by a separate <code>p_priority</code> field of the process descriptor.
+Also implement a system call that lets processes set their own priority
+level.  If more than one process has the same priority level, your
+scheduler should alternate among them.</p>
+
+<p class="exercise"><b>Exercise 4B.</b> Add another scheduling algorithm,
+<code>scheduling_algorithm 3</code>, that implements proportional-share
+scheduling.  In proportional-share scheduling, each process is allocated an
+amount of CPU time proportional to its share.  For example, say
+<code>schedos-1</code> has share 1 and <code>schedos-4</code> has share 4.
+Under proportional-share scheduling, <code>schedos-4</code> will run 4
+times as often as <code>schedos-1</code> (at least until it exits); so we
+might expect to see output like "<code>441444414444144...</code>".  (Note
+that this is a form of priority scheduling, but the priority levels are
+defined differently: larger shares indicate <i>higher</i> priority.)  Also
+implement a system call that lets processes set their share.</p>
+
+
+<h3>Part 2: Synchronization</h3>
+
+<p>In this section of the problem set, you'll investigate synchronization
+issues.  But synchronization isn't interesting without concurrency, and
+right now, our operating system is cooperatively multithreaded: each
+application decides when to give up control.  We introduce concurrency by
+turning on <i>clock interrupts</i> and introducing <i>preemptive
+multithreading</i>.  When a clock interrupt happens, the CPU will stop the
+currently-running process -- <i>no matter where it is</i> -- and transfer
+control to the kernel.  This indicates that the current process's <i>time
+quantum</i> has expired, so the kernel will switch to another process.
+However, note that clock interrupts <i>will never affect the kernel</i>:
+this simple kernel runs with interrupts entirely disabled.  Interrupts can
+only happen in user level processes.</p>
+
+<p class="exercise">Change <code>scheduling_algorithm</code> back to 0.
+Then change the <code>interrupt_controller_init(0)</code> call in
+<code>schedos-kern.c</code> to <code>interrupt_controller_init(1)</code>.
+This turns on clock interrupts.</p>
+
+<p>After running <code class="type">make run</code>, you should
+see a window like this:</p>
+
+<img src="./minilab2_files/fig-schedos2.gif" alt="[SchedOS 2]" align="middle" border="1">
+
+<p>Clock interrupts are occasionally preempting SchedOS processes, breaking
+up the steady round-robin order.</p>
+
+<p class="note"><b>Note:</b> It is better to do this portion of the lab
+using bochs.  Qemu's interrupt handling is too fast; you may not be able to
+observe the same interrupt effects on qemu.</p>
+
+<p class="exercise"><b>Exercise 5.</b> Refer to the picture above (not your
+own SchedOS, which may differ).  During the execution of which process does
+the first known timer interrupt occur?  Explain your answer.</p>
+
+<p>But we're not done!  Let's cause clock interrupts to happen a little bit
+more frequently.</p>
+
+<p class="exercise">The <code>HZ</code> constant in
+<code>schedos-kern.h</code> equals the number of times per second that the
+clock interrupts the processor.  It is set to 100 by default, meaning the
+clock interrupts the processor once every 10 milliseconds.  Set this
+constant to 1000, so that the clock interrupts the processor every
+milliscond.</p>
+
+<p>After running <code class="type">make run</code>, you should
+see a window similar to this:</p>
+
+<img src="./minilab2_files/fig-schedos3.gif" alt="[SchedOS 3]" align="middle" border="1">
+
+<p>Note that the output has less than 320*4 characters!  Clearly there is a
+race condition somewhere!  (Your particular output may differ.  You may
+actually see 320*4 characters <i>with occasional gaps</i>, which
+demonstrates a related race condition.  If you still see 320*4 characters
+with no gaps, try raising <code>HZ</code> to 2000 or 3000.)</p>
+
+<p class="exercise"><b>Exercise 6.</b> Implement a synchronization
+mechanism that fixes this race condition.  Your code should always print
+out 320 * 4 characters with no spaces.  (However, it is OK for the ordering
+of characters to vary.  For instance, you might end with a string of the
+same character, depending on precisely how timer interrupts arrive.)</p>
+
+<p>There are lots of ways to implement the synchronization mechanism; here
+are a couple.</p>
+
+<ul>
+<li>Implement a new system call that atomically prints a character to the
+console.</li>
+<li>Use the atomic operations in <code>x86sync.h</code> directly.</li>
+<li>Use the atomic operations in <code>x86sync.h</code> to build a lock
+data type, then use <code>lock_acquire</code> and <code>lock_release</code>
+operations.  <b>Note that all four processes must share the same lock!</b> It
+does no good to implement a different lock object per process.</li>
+<li>Implement new system calls that provide <code>lock_acquire</code> and
+<code>lock_release</code> operations.</li>
+</ul>
+
+<p>However, you must not turn off clock interrupts.  That would be
+cheating.  Some hints:</p>
+
+<ul>
+<li>You may need to use typecasts to get the <code>x86sync.h</code> atomic
+operations to work.</li>
+<li>Note that <code>cursorpos</code> points to a 16-bit integer, so the C
+statement <code>cursorpos++;</code> actually increments the address stored
+in <code>cursorpos</code> by <b>2</b> bytes, not one.</li>
+<li>If you create a lock object, make sure that all four processes
+<i>share</i> a single lock object.  (There's no critical section if each
+process uses a private lock!)  You can tell each lock's address by
+looking in the <code>obj/schedos-[1-4].sym</code> files, which tells you
+where each symbol is located.  Note that <code>cursorpos</code> has the
+same address in each process.</li>
+</ul>
+<p><b>This completes the minilab.</b></p>
+
+<div class="exercise"><b>Extra-Credit Exercise 7.</b> Implement another
+interesting scheduling algorithm—for example, lottery scheduling or
+multilevel queue scheduling (Google for more information).  Explain how
+your scheduling algorithm is supposed to work, describe any new system
+calls you supplied, and code the algorithm with a new
+<code>scheduling_algorithm</code> value.</div>
+
+<p></p>
+
+<div class="exercise"><b>Extra-Credit Exercise 8.</b> Implement more than
+one synchronization mechanism for printing characters.  Use preprocessor
+symbols so that your code can be compiled with either mechanism.</div>
+
+</div>
+
+<hr>
+<p>
+Copyright Eddie Kohler <a href="http://www.read.cs.ucla.edu/111/">CS111 Winter 2011</a>
+
+
+
+</p></body></html>

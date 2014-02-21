@@ -1,0 +1,113 @@
+H1, H2, H3, H4, H5, H6 {
+  font-family: monospace;
+}
+TABLE TR {
+  vertical-align: top;
+}
+TABLE.sched TH, TABLE.sched TD {
+  background: #fffff9;
+  font-family: monospace;
+}
+P.date {
+  font-variant: italic;
+}
+BODY {
+  background: #ffffff;
+}
+DIV.body {
+	margin-left: 2em;
+	margin-right: 2em;
+}
+
+
+TD.syw, TD.syd, TD.syhd {
+	font-weight: bold;
+}
+.syhd {
+	color: grey;
+}
+.due {
+	background: #ffdd44;
+	padding: .1em .2em .1em .2em;
+	font-weight: bold;
+	font-variant: italic;
+}
+.pdue {
+	background: #ffee77;
+	padding: .1em .2em .1em .2em;
+	font-variant: italic;
+}
+.quiz {
+	background: #eeff77;
+	padding: .1em .2em .1em .2em;
+	font-weight: bold;
+	font-variant: italic;
+}
+.note {
+  border: 2px dotted silver;
+  font-size: 90%;
+  font-variant: italic;
+  padding: .5em .5em .5em .5em;
+}
+.headbar {
+  background: #ffdd44;
+  padding: .5em .5em .5em .5em;
+  font-family: monospace;
+}
+.type {
+  color: #007700;
+  font-family: monospace;
+  font-weight: bold;
+}
+PRE.type, PRE.samp {
+  border: 2px dashed #9999cc;
+  padding: .5em .5em .5em .5em;
+}
+
+TABLE.exercise, TABLE.challenge, TABLE.note, TABLE.question {
+  width: 80%;
+  align: center;
+  padding: .5em .5em .5em .5em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+TABLE.exercise {
+  background: #e0e0ff;
+  border: 1px solid #c0c0ff;
+}
+TABLE.challenge {
+  background: #ffe0e0;
+  border: 1px solid #ffc0c0;
+}
+TABLE.question {
+  background: #f0f0f0;
+  border: 1px solid #aaaaaa;
+}
+
+.exercise {
+  padding: .5em .5em .5em .5em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff8e0;
+  border: 2px dotted silver;
+}
+
+TABLE.sched TD.c {
+  background: #ffC988;
+}
+TABLE.sched TD.nc {
+  background: #eeeeee;
+}
+TABLE.sched TD.due {
+  background: #ff9999;
+}
+TABLE.sched TD.test {
+  background: #99ff99;
+}
+
+.binrewr {
+  color: #990000;
+  font-weight: bold;
+}
