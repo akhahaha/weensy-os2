@@ -6,7 +6,7 @@ UCLA ID: 904030522
 
 Response to Exercise 1:
 
-The name of the scheduling algorithm is:
+The name of the scheduling algorithm is: round-robin
 
 
 (Exercise 2 is a coding exercise)
