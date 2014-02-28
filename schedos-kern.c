@@ -1,3 +1,4 @@
+#include "schedos-app.h"
 #include "schedos-kern.h"
 #include "x86.h"
 #include "lib.h"
@@ -65,7 +66,7 @@ start(void)
 
 	// Set up hardware (schedos-x86.c)
 	segments_init();
-	interrupt_controller_init(0);
+	interrupt_controller_init(1);
 	console_clear();
 
 	// Initialize process descriptors as empty
@@ -98,7 +99,7 @@ start(void)
 	cursorpos = (uint16_t *) 0xB8000;
 
 	// Initialize the scheduling algorithm.
-	scheduling_algorithm = 2;
+	scheduling_algorithm = 0;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -153,8 +154,8 @@ interrupt(registers_t *reg)
 		current->p_priority = reg->reg_eax;
 		run(current);
 
-	case INT_SYS_USER2:
-		/* Your code here (if you want). */
+	case INT_SYS_USER2: // print character
+		*cursorpos++ = reg->reg_eax;
 		run(current);
 
 	case INT_CLOCK:

@@ -32,6 +32,23 @@ sys_setpriority(int priority)
 
 
 /*****************************************************************************
+ * sys_print
+ *
+ *   Prints character to output.
+ *
+ *****************************************************************************/
+
+static inline void
+sys_print(unsigned int character)
+{
+	asm volatile("int %0\n"
+		     : : "i" (INT_SYS_USER2),
+		         "a" (character)
+		     : "cc", "memory");
+}
+
+
+/*****************************************************************************
  * sys_yield
  *
  *   Yield control of the CPU to the kernel, which will pick another
