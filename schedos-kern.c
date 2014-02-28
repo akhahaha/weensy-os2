@@ -81,6 +81,10 @@ start(void)
 		process_t *proc = &proc_array[i];
 		uint32_t stack_ptr = PROC1_START + i * PROC_SIZE;
 
+		// Initialize proportional scheduling vars
+		proc->p_share = 1;
+		proc->p_run_t = 0;
+
 		// Initialize the process descriptor
 		special_registers_init(proc);
 
@@ -99,7 +103,7 @@ start(void)
 	cursorpos = (uint16_t *) 0xB8000;
 
 	// Initialize the scheduling algorithm.
-	scheduling_algorithm = 2;
+	scheduling_algorithm = 3;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -148,11 +152,15 @@ interrupt(registers_t *reg)
 		current->p_exit_status = reg->reg_eax;
 		schedule();
 
-	case INT_SYS_USER1: // set priority
+	case INT_SYS_SETPRIORITY:
 		current->p_priority = reg->reg_eax;
 		run(current);
 
-	case INT_SYS_USER2: // print character
+	case INT_SYS_SETSHARE:
+		current->p_share = reg->reg_eax;
+		run(current);
+
+	case INT_SYS_PRINT:
 		*cursorpos++ = reg->reg_eax;
 		run(current);
 
@@ -188,7 +196,7 @@ void
 schedule(void)
 {
 	pid_t pid = current->p_pid;
-	unsigned int lowest = 0xffffffff;
+	unsigned int lowest = 0xffffffff; // initialized to INTMAX
 
 	switch (scheduling_algorithm) {
 		case 0: // round-robin scheduling
@@ -226,6 +234,23 @@ schedule(void)
 				if (proc_array[pid].p_state == P_RUNNABLE &&
 					proc_array[pid].p_priority <= lowest)
 					run(&proc_array[pid]);
+			}
+			break;
+
+		case 3: // proportional-share scheduling
+			while (1) {
+				if (proc_array[pid].p_state == P_RUNNABLE) {
+					// skip if run more than share
+					if (proc_array[pid].p_run_t >= proc_array[pid].p_share) {
+						proc_array[pid].p_run_t = 0;
+					}
+					else {
+						proc_array[pid].p_run_t++;
+						run(&proc_array[pid]);
+					}
+				}
+				
+				pid = (pid + 1) % NPROCS; // don't change procs until share up
 			}
 			break;
 

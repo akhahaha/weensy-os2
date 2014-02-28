@@ -22,11 +22,28 @@
  *****************************************************************************/
 
 static inline void
-sys_setpriority(int priority)
+sys_setpriority(unsigned int priority)
 {
 	asm volatile("int %0\n"
-		     : : "i" (INT_SYS_USER1),
+		     : : "i" (INT_SYS_SETPRIORITY),
 		         "a" (priority)
+		     : "cc", "memory");
+}
+
+
+/*****************************************************************************
+ * sys_setshare
+ *
+ *   Sets the process' share to 'share'.
+ *
+ *****************************************************************************/
+
+static inline void
+sys_setshare(int share)
+{
+	asm volatile("int %0\n"
+		     : : "i" (INT_SYS_SETSHARE),
+		         "a" (share)
 		     : "cc", "memory");
 }
 
@@ -42,7 +59,7 @@ static inline void
 sys_print(unsigned int character)
 {
 	asm volatile("int %0\n"
-		     : : "i" (INT_SYS_USER2),
+		     : : "i" (INT_SYS_PRINT),
 		         "a" (character)
 		     : "cc", "memory");
 }

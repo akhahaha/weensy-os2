@@ -22,11 +22,17 @@
 #define PRIORITY 6
 #endif
 
+#ifndef SHARE
+#define SHARE 10
+#endif
+
 void
 start(void)
 {
-	sys_setpriority(PRIORITY); // set process priority
-	
+	sys_setpriority(PRIORITY);	// set process priority
+	sys_setshare(SHARE);		// set process share
+	sys_yield();				// yield after setting priority/shares
+
 	int i;
 	for (i = 0; i < RUNCOUNT; i++) {
 		// Write characters to the console, yielding after each one.

@@ -28,7 +28,7 @@ Average wait time for scheduling_algorithm 1:
 Exercise 4:
 
 Did you complete Exercise 4A, Exercise 4B, or both for extra credit?
-	Completed Exercise 4A.
+	Completed both Exercise 4A and Exercise 4B.
 
 
 Exercise 5:
