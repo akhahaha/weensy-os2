@@ -32,6 +32,10 @@ Did you complete Exercise 4A, Exercise 4B, or both for extra credit?
 
 
 Exercise 5:
+	Process 4 was interrupted. The round-robin scheduling managed to execute 
+	four times, before the timer expired, and process 4 was unable to print 
+	during the fifth round-robin cycle, resulting in:
+	1234 1234 1234 1234 1231 2341
 
 
 (Exercise 6 is a coding exercise)
