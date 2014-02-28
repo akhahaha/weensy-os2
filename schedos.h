@@ -23,4 +23,8 @@
 
 extern uint16_t * volatile cursorpos;
 
+// Write lock for synchronization (stored at memory location 0x198004).
+
+extern uint32_t write_lock;
+
 #endif

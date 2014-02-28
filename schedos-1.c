@@ -18,6 +18,9 @@
 #define PRINTCHAR	('1' | 0x0C00)
 #endif
 
+// preprocessor signal for alternate synchronization
+#define ALTSYNC
+
 #ifndef PRIORITY
 #define PRIORITY 6
 #endif
@@ -36,7 +39,21 @@ start(void)
 	int i;
 	for (i = 0; i < RUNCOUNT; i++) {
 		// Write characters to the console, yielding after each one.
-		sys_print(PRINTCHAR);
+
+		#ifndef ALTSYNC // primary sync method
+			sys_print(PRINTCHAR);
+		#endif
+		#ifdef ALTSYNC // alternate sync method
+			// attempt get write lock
+			while (atomic_swap(&write_lock, 1) != 0)
+				continue;
+
+			// write
+			*cursorpos++ = PRINTCHAR;
+
+			// release write lock
+			atomic_swap(&write_lock, 0);
+		#endif
 		sys_yield();
 	}
 

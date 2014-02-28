@@ -44,3 +44,6 @@ Exercise 5:
 Anything else you'd like us to know:
 
 
+Exercise 8:
+	Implemented with locks. Activate by defining ALTSYNC preprocessor symbol in 
+	schedos-1.c.
