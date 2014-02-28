@@ -98,7 +98,7 @@ start(void)
 	cursorpos = (uint16_t *) 0xB8000;
 
 	// Initialize the scheduling algorithm.
-	scheduling_algorithm = 1;
+	scheduling_algorithm = 2;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -147,10 +147,10 @@ interrupt(registers_t *reg)
 		current->p_exit_status = reg->reg_eax;
 		schedule();
 
-	case INT_SYS_USER1:
+	case INT_SYS_USER1: // set priority
 		// 'sys_user*' are provided for your convenience, in case you
 		// want to add a system call.
-		/* Your code here (if you want). */
+		current->p_priority = reg->reg_eax;
 		run(current);
 
 	case INT_SYS_USER2:
@@ -203,12 +203,48 @@ schedule(void)
 			}
 			break;
 
-		case 1: { // priority scheduling
+		case 1: // priority scheduling (by pid)
+			while (1) {
+				// run highest-priority, runnable process
+				for (pid = 0; pid < NPROCS; pid++)
+					if (proc_array[pid].p_state == P_RUNNABLE)
+						run(&proc_array[pid]);
+			}
+			break;
+
+		case 2: { // priority scheduling (set priority)
+				pid_t procs[NPROCS];
+				int i;
+				for (i = 0; i < NPROCS; i++) {
+					procs[i] = 0;
+				}
+
 				while (1) {
-					// run highest-priority, runnable process
-					for (pid = 0; pid < NPROCS; pid++)
-						if (proc_array[pid].p_state == P_RUNNABLE)
-							run(&proc_array[pid]);
+					i = 0; // reused as batch size
+					unsigned int lowest = 0xffffffff; // INTMAX
+
+					// gather highest priority runnable processes
+					for (pid = 0; pid < NPROCS; pid++) {
+						if (proc_array[pid].p_state == P_RUNNABLE) {
+							if (proc_array[pid].p_priority < lowest) {
+								i = 0;
+								lowest = proc_array[pid].p_priority;
+								procs[i] = pid;
+								i++;
+							}
+							else if (proc_array[pid].p_priority == lowest) {
+								procs[i] = pid;
+								i++;
+							}
+						}
+					}
+
+					// run batch of highest priority processes
+					while (i > 0) {
+						if (proc_array[procs[i-1]].p_state == P_RUNNABLE)
+							run(&proc_array[procs[i-1]]);
+						i--;
+					}
 				}
 			}
 			break;

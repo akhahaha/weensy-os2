@@ -23,6 +23,7 @@ typedef enum procstate {
 // Process descriptor type
 typedef struct process {
 	pid_t p_pid;			// Process ID
+	unsigned int p_priority;	// Process priority (lower = higher priority)
 
 	registers_t p_registers;	// Current process state: registers,
 					// stack location, EIP, etc.

@@ -15,6 +15,23 @@
 
 
 /*****************************************************************************
+ * sys_setpriority
+ *
+ *   Sets the process' priority to 'priority'.
+ *
+ *****************************************************************************/
+
+static inline void
+sys_setpriority(int priority)
+{
+	asm volatile("int %0\n"
+		     : : "i" (INT_SYS_USER1),
+		         "a" (priority)
+		     : "cc", "memory");
+}
+
+
+/*****************************************************************************
  * sys_yield
  *
  *   Yield control of the CPU to the kernel, which will pick another
